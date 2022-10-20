@@ -1,9 +1,5 @@
 # Autoformat (push results)
 
-GitHub Action to push autoformatted source code to pull requests
-
-# Autoformat push
-
 This is a GitHub Action to applies a patch found in an artifact to a pull
 request, and pushes the results to the branch in question.
 
