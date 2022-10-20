@@ -1,0 +1,97 @@
+name: 'Commit Autoformat'
+description: 'Commit autoformatted patch'
+inputs:
+  git_user_email:
+    description: "The committer's email for the patch"
+    required: false
+    default: 'autoformat@example.com'
+  git_user_name:
+    description: "The committer's name for the patch"
+    required: false
+    default: 'GitHub Actions Autoformatter'
+  artifact:
+    description: 'The name of the artifact where the patch is stored'
+    required: true
+    default: 'autoformat'
+  commentOnPullRequest:
+    description: 'If a comment should be added to the pull request if something was pushed'
+    required: true
+    default: true
+  commentContents:
+    description: 'The comment to add to the pull request'
+    required: true
+    default: '# :warning: Your code has been reformatted. :warning:\n\n'
+  githubToken:
+    description: 'The GitHub token to use when pushing the commit'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+  - name: 'Download the artifact'
+    uses: actions/github-script@v6.3.3
+    with:
+      script: |
+        var artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+           owner: context.repo.owner,
+           repo: context.repo.repo,
+           run_id: ${{github.event.workflow_run.id }},
+        });
+        var matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+          return artifact.name == "${{ inputs.artifact }}"
+        })[0];
+        var download = await github.rest.actions.downloadArtifact({
+           owner: context.repo.owner,
+           repo: context.repo.repo,
+           artifact_id: matchArtifact.id,
+           archive_format: 'zip',
+        });
+        var fs = require('fs');
+        fs.writeFileSync('${{github.workspace}}/${{ inputs.artifact }}.zip', Buffer.from(download.data));
+
+  - name: 'Unzip artifacts'
+    id: unzip_artifacts
+    shell: bash
+    run: |
+      unzip -d ../autoformat "${{ inputs.artifact }}.zip"
+      if test -f ../autoformat/autoformat.patch; then
+        echo "autoformatted=true" >> "$GITHUB_OUTPUT"
+      fi
+
+  - name: 'Checkout repo'
+    uses: actions/checkout@v3
+    if: steps.unzip_artifacts.outputs.autoformatted == 'true'
+    with:
+      fetch-depth: 0
+      repository: ${{ github.event.workflow_run.head_repository.full_name }}
+      ref: ${{ github.event.workflow_run.head_branch }}
+
+  - name: 'Get autoformatted commit and push it'
+    if: steps.unzip_artifacts.outputs.autoformatted == 'true'
+    shell: bash
+    run: |
+      if test -n "${{ inputs.git_user_email }}"; then
+        git config --global user.email "${{ inputs.git_user_email }}"
+      fi
+      if test -n "${{ inputs.git_user_name }}"; then
+        git config --global user.name "${{ inputs.git_user_name }}"
+      fi
+      cat ../autoformat/autoformat.patch
+      git am < ../autoformat/autoformat.patch
+      git show
+      git push
+
+  - name: 'Yell at user'
+    if: steps.unzip_artifacts.outputs.autoformatted == 'true' && inputs.commentOnPullRequest == 'true'
+    uses: actions/github-script@v6.3.3
+    with:
+      github-token: ${{ inputs.githubToken }}
+      script: |
+        let fs = require('fs');
+        let issue_number = Number(fs.readFileSync('../autoformat/PR'));
+        await github.rest.issues.createComment({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          issue_number: issue_number,
+          body: '# :warning: Your code has been reformatted. :warning:\n\n'
+        });
