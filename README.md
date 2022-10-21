@@ -11,9 +11,11 @@ The secret is required to push to pull requests from forks.
 
 Ref: The [rolfbjarne/autoformat](https://github.com/rolfbjarne/autoformat) action.
 
+Important: this action must be in the default branch (usually `main`) for it to have any effect.
+
 ## Usage
 
-Add a new file named `autoformat.yml` in the `.github/workflows` directory in your repository:
+Add a new file named `autoformat-push.yml` in the `.github/workflows` directory in your repository:
 
 ```yaml
 name: Autoformat code - push results
