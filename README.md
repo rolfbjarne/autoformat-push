@@ -25,6 +25,11 @@ on:
     types:
       - completed
 
+# This action needs the following permissions in order to push the results back to the original branch.
+permissions:
+  pull-requests: write
+  contents: write
+
 jobs:
   push-and-notify:
     name: Push autoformatted code and notify user
