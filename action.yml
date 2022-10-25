@@ -77,7 +77,7 @@ runs:
         git config --global user.name "${{ inputs.git_user_name }}"
       fi
       cat ../autoformat/autoformat.patch
-      git am < ../autoformat/autoformat.patch
+      git am --keep-cr < ../autoformat/autoformat.patch
       git show
       git push
 
