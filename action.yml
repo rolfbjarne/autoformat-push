@@ -93,5 +93,5 @@ runs:
           owner: context.repo.owner,
           repo: context.repo.repo,
           issue_number: issue_number,
-          body: '# :warning: Your code has been reformatted. :warning:\n\n'
+          body: '${{ inputs.commentContents }}'
         });
