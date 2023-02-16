@@ -39,7 +39,7 @@ jobs:
       github.event.workflow_run.conclusion == 'success'
     steps:
       - name: 'Push autoformatted patch'
-        uses: rolfbjarne/autoformat-push@v0.1
+        uses: rolfbjarne/autoformat-push@v0.2
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 ```
