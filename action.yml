@@ -59,7 +59,7 @@ runs:
       fi
 
   - name: 'Checkout repo'
-    uses: actions/checkout@v3
+    uses: actions/checkout@v4
     if: steps.unzip_artifacts.outputs.autoformatted == 'true'
     with:
       fetch-depth: 0
